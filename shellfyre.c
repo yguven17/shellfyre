@@ -409,6 +409,7 @@ void file_printer(char *file_list[], size_t size) {
                 printf("\t%s\n", file_list[j]);
                 j--;
             }
+            
             printf("\nAll files printed.");
 
             break;
