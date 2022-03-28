@@ -315,6 +315,8 @@ int prompt(struct command_t *command)
 }
 
 int process_command(struct command_t *command);
+void file_printer(char *file_list[], size_t size);
+void file_opener(char *file_list[], size_t size);
 
 int main()
 {
@@ -391,4 +393,54 @@ int process_command(struct command_t *command)
 
 	printf("-%s: %s: command not found\n", sysname, command->name);
 	return UNKNOWN;
+}
+
+void file_printer(char *file_list[], size_t size) {
+
+	int i,j;
+
+    for (i = 0; i < size; i++) {
+
+        if (strcmp(file_list[i], "") == 0) {
+
+            j= i - 1;
+
+            while (index >= 0) {
+
+                printf("\t%s\n", file_list[j]);
+                j--;
+            }
+
+            printf("\nAll files printed.");
+
+            break;
+        }
+    }
+}
+
+void file_opener(char *file_list[], size_t size) {
+
+	int i;
+
+    for (i = 0; i < size; i++) {
+
+        if (strcmp(file_list[i], "") != 0) {
+
+            char *args[] = {"xdg-open", file_list[i], NULL};
+
+            pid_t pid = fork();
+
+            if (pid == 0) {
+
+                char *path = find_path("xdg-open");
+                execv(path, args);
+                free(path);
+
+            } else {
+
+                wait(NULL);
+
+            }
+        }
+    }
 }
