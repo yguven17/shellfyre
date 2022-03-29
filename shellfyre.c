@@ -343,30 +343,33 @@ int main()
 	return 0;
 }
 
-void search_file(char *fileName, char *secondCommand) 
+void file_search(char *fileName, char *secondCommand, char *dirCommand) 
 {
 	//printf("\n\n working  \n\n");	
 	DIR *folder;
 	struct dirent *entry;
 
-	folder = opendir("."); //current folder
+	folder = opendir(dirCommand); //current folder
 
-	if (folder == NULL) {
-		printf("\n\n *** FILE NOT FOUND *** \n\n");
+	if (folder != NULL) {
+		 while ((entry = readdir(folder))) { //this loop will be worked equal to NULLi
+                        if (secondCommand != NULL && secondCommand != "dirl") {
+                                if (strcmp(entry->d_name, ".") == 0) {
+                                      file_search(fileName, "dirl", ".."); //recursion
+                                } else if (strstr(entry->d_name, "..")) {
+                                      file_search(fileName, "dirl", "...");
+                                }
+                        }
+                        if (strstr(entry->d_name, fileName)) { //print method
+				if (secondCommand == "dirl") {
+					 printf("  ./dirl/%s\n", entry->d_name);
+				} else { 
+					 printf("  ./%s\n", entry->d_name);
+				}
+                        }
+                }
 	}
-
-	while ((entry = readdir(folder))) { //this loop will be worked equal to NULL
-		if (strstr(entry->d_name, fileName)) {
-			printf("  ./%s\n", entry->d_name);
-		}
-	}
-
 	closedir(folder);
-	if (secondCommand == NULL) { //just search file
-
-	} else {  //-r or -o method
-	
-	}
 }
 
 int process_command(struct command_t *command)
@@ -398,7 +401,18 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "filesearch") == 0)
         {
-		search_file(command->args[0], NULL);
+		if (command->arg_count == 1) {
+			file_search(command->args[0], NULL, ".");
+
+		} else if (command->arg_count == 2) {
+			file_search(command->args[1], command->args[0], ".");
+
+                } else if (command->arg_count == 3) {
+			file_search(command->args[0], command->args[1], ".");
+
+                } else {
+			printf("Please enter valid input.\n");
+		}
         }
 
 	if (strcmp(command->name, "cdh") == 0)
