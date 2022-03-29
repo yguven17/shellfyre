@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
+
+#include <dirent.h> //for search file, dir 
 const char *sysname = "shellfyre";
 
 enum return_codes
@@ -341,6 +343,32 @@ int main()
 	return 0;
 }
 
+void search_file(char *fileName, char *secondCommand) 
+{
+	//printf("\n\n working  \n\n");	
+	DIR *folder;
+	struct dirent *entry;
+
+	folder = opendir("."); //current folder
+
+	if (folder == NULL) {
+		printf("\n\n *** FILE NOT FOUND *** \n\n");
+	}
+
+	while ((entry = readdir(folder))) { //this loop will be worked equal to NULL
+		if (strstr(entry->d_name, fileName)) {
+			printf("  ./%s\n", entry->d_name);
+		}
+	}
+
+	closedir(folder);
+	if (secondCommand == NULL) { //just search file
+
+	} else {  //-r or -o method
+	
+	}
+}
+
 int process_command(struct command_t *command)
 {
 	int r;
@@ -362,6 +390,26 @@ int process_command(struct command_t *command)
 	}
 
 	// TODO: Implement your custom commands here
+
+	if (strcmp(command->name, "take") == 0)
+	{
+
+	}
+
+	if (strcmp(command->name, "filesearch") == 0)
+        {
+		search_file(command->args[0], NULL);
+        }
+
+	if (strcmp(command->name, "cdh") == 0)
+        {
+
+        }
+
+	if (strcmp(command->name, "joker") == 0)
+        {
+
+        }
 
 	pid_t pid = fork();
 
@@ -418,6 +466,7 @@ void file_printer(char *file_list[], size_t size) {
     }
 }
 
+/*
 void file_opener(char *file_list[], size_t size) {
 
 	int i;
@@ -443,4 +492,4 @@ void file_opener(char *file_list[], size_t size) {
             }
         }
     }
-}
+} */
