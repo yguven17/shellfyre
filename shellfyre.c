@@ -372,6 +372,33 @@ void file_search(char *fileName, char *secondCommand, char *dirCommand)
 	closedir(folder);
 }
 
+void pwd() // basic
+{
+	char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+        printf("%s\n", cwd);
+}
+
+void ls() //basic 
+{
+	DIR *folder;
+        struct dirent *entry;
+        folder = opendir("."); 
+
+        if (folder != NULL) {
+                 while ((entry = readdir(folder))) { //this loop will be worked equal to NULL
+			 if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) { //print method
+                               printf("  %s", entry->d_name);
+                        }
+                 }
+		 printf("\n");
+        }
+        closedir(folder);
+
+
+
+}
+
 int process_command(struct command_t *command)
 {
 	int r;
@@ -393,6 +420,16 @@ int process_command(struct command_t *command)
 	}
 
 	// TODO: Implement your custom commands here
+
+	if (strcmp(command->name, "pwd") == 0)
+        {
+		pwd();
+        }
+
+	if (strcmp(command->name, "ls") == 0)
+        {
+		ls();
+        }
 
 	if (strcmp(command->name, "take") == 0)
 	{
@@ -417,7 +454,12 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "cdh") == 0)
         {
-
+		char cwd[1024];
+        	getcwd(cwd, sizeof(cwd));
+        	printf("%s", cwd);
+		printf("\n\n");	
+	
+//		printf("%s \n\n", sysname);
         }
 
 	if (strcmp(command->name, "joker") == 0)
