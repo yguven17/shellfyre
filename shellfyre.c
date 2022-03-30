@@ -325,7 +325,7 @@ char history_path[1024];
 
 int main()
 {
-	strcat(getcwd(history_path, sizeof(history_path)), "/history.txt");
+	strcat(getcwd(history_path, sizeof(history_path)), "/history.txt"); //initialize path
 	while (1)
 	{
 		struct command_t *command = malloc(sizeof(struct command_t));
@@ -403,23 +403,47 @@ void ls() //basic
 
 }
 
+void check_length_file() {
+	FILE *history = fopen(history_path, "r");
+	int line_count = 0;
+	char line[500];
+	while (fgets(line, 500, history)) {
+		line_count++;
+	}
+	fclose(history);
+	if (line_count>9) {
+		char text_array[10][500];
+		FILE *history = fopen(history_path, "r");
+    		char line2[500];
+		int temp = 0;
+		int i=0;
+        	while (fgets(line2, 500, history)) {
+                	temp++;
+			if (line_count-temp < 10) {
+				strcpy(text_array[i], line2);
+				i++;
+			}
+        	}
+		fclose(history);
+		FILE *history_write = fopen(history_path, "w");
+		int j=0;
+		for (j=0; j<10; j++) {
+			fprintf(history_write, "%s", text_array[j]);
+		}
+		fclose(history_write);
+	}
+}
+
 void print_in_file() 
 {
 	FILE *history = fopen(history_path, "a+"); //append mode
-	//fwrite(location, sizeof(char), strlen(location), history);
-	char text[1024];
 	char cwd[1024];
-//	fpinrtf(history, "%s\n", cwd);
         getcwd(cwd, sizeof(cwd));
-
-       fprintf(history, "%s\n", cwd);
-
-
-	//snprintf(text, sizeof(text), "%s\n", cwd);
-//	fputs(cwd, history);
-//	fputs("\n", history);
-	fclose(history);
+	fprintf(history, "%s\n", cwd);
+	fclose(history); 
+	check_length_file();
 }
+
 
 void cdh() 
 {	
