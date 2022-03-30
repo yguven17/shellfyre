@@ -449,13 +449,40 @@ void cdh()
 {	
 	FILE *history = fopen(history_path, "r");
 	char line[500];
-
+	int size = 0;
+        while (fgets(line, 500, history)) {
+        	size++;
+        }
+	char text_array[size][500];
+	int i=0;
+	fseek(history, 0, SEEK_SET);
 	while (fgets(line, 500, history)) {
-		printf("%s", line);
-	
+		strcpy(text_array[i], line);
+		i++;
+	}
+	fclose(history);
+	int j=0;
+	for (j=0; j<size; j++) {
+		printf("%c  %d)  %s", 96+size-j,  size-j, text_array[j]);
 	}
 
-	fclose(history);
+	printf("Select directory by letter or number: ");
+	char input[15];
+	fgets(input, 15, stdin);
+	int selected = 0;
+	input[strlen(input)-1] = '\0'; 
+	if (input[0]>96 && input[0]<97+size) {
+		selected = input[0]-96;
+		char *directory = text_array[size-selected];
+	       	directory[strlen(directory)-1] = '\0'; 	
+		chdir(directory);
+	} else if (input[0]>0 && input[0]>size+1) {
+	        selected = atoi(input);
+	 	char *directory = text_array[size-selected];
+                directory[strlen(directory)-1] = '\0';
+                chdir(directory);	
+	}
+	//printf("****%d\n", selected);
 
 }
 
