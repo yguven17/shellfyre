@@ -81,6 +81,7 @@ int free_command(struct command_t *command)
  * Show the command prompt
  * @return [description]
  */
+
 int show_prompt()
 {
 	char cwd[1024], hostname[1024];
@@ -320,8 +321,11 @@ int process_command(struct command_t *command);
 void file_printer(char *file_list[], size_t size);
 void file_opener(char *file_list[], size_t size);
 
+char history_path[1024];
+
 int main()
 {
+	strcat(getcwd(history_path, sizeof(history_path)), "/history.txt");
 	while (1)
 	{
 		struct command_t *command = malloc(sizeof(struct command_t));
@@ -399,6 +403,38 @@ void ls() //basic
 
 }
 
+void print_in_file() 
+{
+	FILE *history = fopen(history_path, "a+"); //append mode
+	//fwrite(location, sizeof(char), strlen(location), history);
+	char text[1024];
+	char cwd[1024];
+//	fpinrtf(history, "%s\n", cwd);
+        getcwd(cwd, sizeof(cwd));
+
+       fprintf(history, "%s\n", cwd);
+
+
+	//snprintf(text, sizeof(text), "%s\n", cwd);
+//	fputs(cwd, history);
+//	fputs("\n", history);
+	fclose(history);
+}
+
+void cdh() 
+{	
+	FILE *history = fopen(history_path, "r");
+	char line[500];
+
+	while (fgets(line, 500, history)) {
+		printf("%s", line);
+	
+	}
+
+	fclose(history);
+
+}
+
 int process_command(struct command_t *command)
 {
 	int r;
@@ -413,8 +449,13 @@ int process_command(struct command_t *command)
 		if (command->arg_count > 0)
 		{
 			r = chdir(command->args[0]);
-			if (r == -1)
+			if (r == -1) {
 				printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+			}else {
+				//printf("\n***ok***\n");
+				//strcat(getcwd(history_path, sizeof(history_path)), "history.txt");
+				print_in_file();
+			}
 			return SUCCESS;
 		}
 	}
@@ -454,12 +495,7 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "cdh") == 0)
         {
-		char cwd[1024];
-        	getcwd(cwd, sizeof(cwd));
-        	printf("%s", cwd);
-		printf("\n\n");	
-	
-//		printf("%s \n\n", sysname);
+		cdh();
         }
 
 	if (strcmp(command->name, "joker") == 0)
