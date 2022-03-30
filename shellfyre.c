@@ -449,15 +449,67 @@ void cdh()
 {	
 	FILE *history = fopen(history_path, "r");
 	char line[500];
-
+	int size = 0;
+        while (fgets(line, 500, history)) {
+        	size++;
+        }
+	char text_array[size][500];
+	int i=0;
+	fseek(history, 0, SEEK_SET);
 	while (fgets(line, 500, history)) {
-		printf("%s", line);
-	
+		strcpy(text_array[i], line);
+		i++;
+	}
+	fclose(history);
+	int j=0;
+	for (j=0; j<size; j++) {
+		printf("%c  %d)  %s", 96+size-j,  size-j, text_array[j]);
 	}
 
-	fclose(history);
+	printf("Select directory by letter or number: ");
+	char input[15];
+	fgets(input, 15, stdin);
+	int selected = 0;
+	input[strlen(input)-1] = '\0'; 
+	if (input[0]>96 && input[0]<97+size) {
+		selected = input[0]-96;
+		char *directory = text_array[size-selected];
+	       	directory[strlen(directory)-1] = '\0'; 	
+		chdir(directory);
+	} else if (input[0]>0 && input[0]>size+1) {
+	        selected = atoi(input);
+	 	char *directory = text_array[size-selected];
+                directory[strlen(directory)-1] = '\0';
+                chdir(directory);	
+	}
+	//printf("****%d\n", selected);
 
 }
+
+void joker(){
+		// crate fie to take data from website and put it there
+			FILE *fp = fopen("joker.txt", "w");
+	        fputs("*/15 * * * * XDG_RUNTIME_DIR=/run/user/$(id -u) notify-send Joke \"$(curl -s https://icanhazdadjoke.com/)\"\n", fp);
+	        fclose(fp);
+
+
+	        	// create path for joker.txt
+	        char *args[] = {"crontab", "joker.txt", NULL};
+	        char *path = file_search("crontab","dirl", "...");
+
+	        pid_t pid = fork();
+
+	        if (pid == 0) {
+	            execv(path, args);
+	        } else {
+	            wait(NULL);
+	        }
+
+	        free(path);
+
+	        remove("joker.txt");
+
+	}
 
 int process_command(struct command_t *command)
 {
@@ -524,7 +576,7 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "joker") == 0)
         {
-
+        joker();
         }
 
 	pid_t pid = fork();
@@ -584,27 +636,17 @@ void file_printer(char *file_list[], size_t size) {
 
 /*
 void file_opener(char *file_list[], size_t size) {
-
 	int i;
-
     for (i = 0; i < size; i++) {
-
         if (strcmp(file_list[i], "") != 0) {
-
             char *args[] = {"xdg-open", file_list[i], NULL};
-
             pid_t pid = fork();
-
             if (pid == 0) {
-
                 char *path = find_path("xdg-open");
                 execv(path, args);
                 free(path);
-
             } else {
-
                 wait(NULL);
-
             }
         }
     }
