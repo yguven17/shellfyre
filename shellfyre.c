@@ -369,41 +369,43 @@ int open_file(char *name) { //this function is helper for filesearch()
 
 void file_properties() {
 
-	char file[1024];
-	struct stat buf;
+	char *input = (char*)malloc(100);
+	struct stat *buf = malloc(sizeof(struct stat));
 	printf("Enter file name: ");
-	//fgets(file, 1024, stdin);
-	scanf("%s", file);
-	//file[strlen(file-1)] = '\0';
-	//printf("%s\n", file);
-	if(stat(file, &buf) == 0) {
+	fgets(input, 100, stdin);
+	input[strlen(input)-1]= '\0';
+	if(stat(input, buf) == 0) {
 		struct tm date;
 		struct tm date2;
-		printf("\nFile access permisson: ");
-		if (buf.st_mode & R_OK) {
+		printf("File access permisson: ");
+		if (buf->st_mode & R_OK) {
 			printf("read");
 		}
 
-		if (buf.st_mode & W_OK) {
+		if (buf->st_mode & W_OK) {
                         printf("write");
                 }
 
-		if (buf.st_mode & X_OK) {
+		if (buf->st_mode & X_OK) {
                         printf("execute");
                 }
 
-		printf("\nFile siz: %ld\n", buf.st_size);
+		printf("\nFile size: %ld\n", buf->st_size);
 		
-		date = *(gmtime(&buf.st_ctime));
-		printf("Created date: %d-%d-%d, time: %d:%d:%d\n", date.tm_mday, date.tm_mon, date.tm_year+1900,date.tm_hour, date.tm_min, date.tm_sec);
+		date = *(gmtime(&buf->st_ctime));
+		printf("Created date: %d-%d-%d, time: %d:%d:%d\n", date.tm_mday, date.tm_mon, date.tm_year+1900,
+				date.tm_hour, date.tm_min, date.tm_sec);
 
-	//	date2 = *(gmtime(&buf.st_mtime));
-          //      printf("Modified date: %d-%d-%d, time: %d:%d:%d\n", date2.tm_mday, date2.tm_mon, date2.tm_year+1900, 
-	//			date2.tm_hour, date2.tm_min, date2.tm_sec);
+		date2 = *(gmtime(&buf->st_mtime));
+                printf("Modified date: %d-%d-%d, time: %d:%d:%d\n", date2.tm_mday, date2.tm_mon, date2.tm_year+1900, 
+				date2.tm_hour, date2.tm_min, date2.tm_sec);
 	} else {
 		printf("File can not find.\n");
 	
 	}
+
+	//free(buf);
+	free(input);
 
 }
 
@@ -617,6 +619,7 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "take") == 0)
 	{
+	//	takeFunc();
 		return SUCCESS;
 	}
 
@@ -658,6 +661,7 @@ int process_command(struct command_t *command)
 		return SUCCESS;
         }
 
+
 	if (strcmp(command->name, "fileproperties") == 0)
         {
                 file_properties();
@@ -675,6 +679,37 @@ int process_command(struct command_t *command)
                 return SUCCESS;
         }
 
+	if (strcmp(command->name, "basiccalculator") == 0)
+        {
+
+                printf("order for op:  basiccalculator <number1> <operator> <number2>\n");
+                        printf("operators : +, -, *, /.\n");
+
+                char op = command->args[2];
+
+
+  double number1= atoi(command->args[1]);
+  double number2= atoi(command->args[3]);
+
+
+  switch (op) {
+    case '+':
+      printf("%.1lf + %.1lf = %.1lf", number1, number2, number1 + number2);
+      break;
+    case '-':
+      printf("%.1lf - %.1lf = %.1lf", number1, number2, number1 - number2);
+      break;
+    case '*':
+      printf("%.1lf * %.1lf = %.1lf", number1, number2, number1 * number2);
+      break;
+    case '/':
+      printf("%.1lf / %.1lf = %.1lf", number1, number2, number1 / number2);
+      break;
+    // operator doesn't match any case constant
+    default:
+      printf("Error! operator is not correct");
+        }
+	}
 
 	pid_t pid = fork();
 
