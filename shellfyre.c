@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
-
+#include <sys/stat.h>
 #include <dirent.h> //for search file, dir 
 const char *sysname = "shellfyre";
 
@@ -319,7 +319,6 @@ int prompt(struct command_t *command)
 
 int process_command(struct command_t *command);
 void file_printer(char *file_list[], size_t size);
-void file_opener(char *file_list[], size_t size);
 
 char history_path[1024];
 
@@ -347,28 +346,62 @@ int main()
 	return 0;
 }
 
-void file_search(char *fileName, char *secondCommand, char *dirCommand) 
-{
-	//printf("\n\n working  \n\n");	
+char* set_path(char *command);
+
+int open_file(char *name) {
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		char *buf[] = {"xdg-open", name, NULL};
+		char *path = set_path("xdg-open");
+		execv(path, buf);
+		free(path);
+	
+	} else {
+		wait(NULL);
+		//kill(pid, SIGKILL);
+	}
+
+
+	return SUCCESS;
+}
+
+void file_search(char *fileName, char *secondCommand, char *dirCommand, char *thirdCommand) 
+{	
 	DIR *folder;
 	struct dirent *entry;
-
 	folder = opendir(dirCommand); //current folder
 
 	if (folder != NULL) {
 		 while ((entry = readdir(folder))) { //this loop will be worked equal to NULLi
                         if (secondCommand != NULL && secondCommand != "dirl") {
                                 if (strcmp(entry->d_name, ".") == 0) {
-                                      file_search(fileName, "dirl", ".."); //recursion
+                                      file_search(fileName, "dirl", "..", thirdCommand); //recursion
                                 } else if (strstr(entry->d_name, "..")) {
-                                      file_search(fileName, "dirl", "...");
+                                      file_search(fileName, "dirl", "...", thirdCommand);
                                 }
                         }
-                        if (strstr(entry->d_name, fileName)) { //print method
+
+                        if (strstr(entry->d_name, fileName)) { //print and open method
 				if (secondCommand == "dirl") {
-					 printf("  ./dirl/%s\n", entry->d_name);
+				//	printf("\n Third : %s \n", thirdCommand);
+					if (thirdCommand == "r") {
+						printf("  ./dirl/%s\n", entry->d_name);
+					} else if (thirdCommand	== "o" ) {
+						open_file(entry->d_name);
+					} else if (thirdCommand == "ro") {
+						printf("  ./dirl/%s\n", entry->d_name);
+						open_file(entry->d_name);
+					}
 				} else { 
-					 printf("  ./%s\n", entry->d_name);
+					if (thirdCommand == "r") {
+						printf("  ./%s\n", entry->d_name);
+					} else if (thirdCommand == "o" ) {
+                                                open_file(entry->d_name);
+                                        } else if (thirdCommand == "ro") {
+                                                printf("  ./%s\n", entry->d_name);
+                                                open_file(entry->d_name);
+                                        }
 				}
                         }
                 }
@@ -486,34 +519,28 @@ void cdh()
 
 }
 
-void joker(){
-		// crate fie to take data from website and put it there
-			FILE *fp = fopen("joker.txt", "w");
-	        fputs("*/15 * * * * XDG_RUNTIME_DIR=/run/user/$(id -u) notify-send Joke \"$(curl -s https://icanhazdadjoke.com/)\"\n", fp);
-	        fclose(fp);
+char* set_path(char *command) {
+	char *path = malloc(1024);
+	strcat(path, "/usr/bin/"); //path adress
+	strcat(path, command);
 
+	struct stat *buf = malloc(sizeof(struct stat));
+	int check_path = stat(path, buf); //if path valid or not 
 
-	        	// create path for joker.txt
-	        char *args[] = {"crontab", "joker.txt", NULL};
-	        char *path = file_search("crontab","dirl", "...");
-
-	        pid_t pid = fork();
-
-	        if (pid == 0) {
-	            execv(path, args);
-	        } else {
-	            wait(NULL);
-	        }
-
-	        free(path);
-
-	        remove("joker.txt");
-
+	if (check_path == 0) {
+		free(buf);
+		return path;
 	}
+
+	free(path);
+	free(buf);
+	return NULL;
+}
 
 int process_command(struct command_t *command)
 {
 	int r;
+
 	if (strcmp(command->name, "") == 0)
 		return SUCCESS;
 
@@ -538,7 +565,7 @@ int process_command(struct command_t *command)
 
 	// TODO: Implement your custom commands here
 
-	if (strcmp(command->name, "pwd") == 0)
+/*	if (strcmp(command->name, "pwd") == 0)
         {
 		pwd();
         }
@@ -547,7 +574,7 @@ int process_command(struct command_t *command)
         {
 		ls();
         }
-
+*/
 	if (strcmp(command->name, "take") == 0)
 	{
 
@@ -556,17 +583,27 @@ int process_command(struct command_t *command)
 	if (strcmp(command->name, "filesearch") == 0)
         {
 		if (command->arg_count == 1) {
-			file_search(command->args[0], NULL, ".");
+			file_search(command->args[0], NULL, ".", "r");
 
 		} else if (command->arg_count == 2) {
-			file_search(command->args[1], command->args[0], ".");
-
+			if (strcmp(command->args[0], "-r") == 0) {
+				file_search(command->args[1], "current", ".", "r");
+			} else if (strcmp(command->args[0], "-o") == 0) {
+                                file_search(command->args[1], "current", ".", "o");
+                        } else {
+				printf("Command not found.\n");
+			}
                 } else if (command->arg_count == 3) {
-			file_search(command->args[0], command->args[1], ".");
-
+			if (((strcmp(command->args[0], "-r") == 0) && (strcmp(command->args[1], "-o") == 0)) ||
+				((strcmp(command->args[0], "-o") == 0) && (strcmp(command->args[1], "-r") == 0))) {
+				file_search(command->args[2], "current", ".", "ro");		
+			} else {
+                                printf("Command not found.\n");
+                        }
                 } else {
 			printf("Please enter valid input.\n");
 		}
+		return SUCCESS;
         }
 
 	if (strcmp(command->name, "cdh") == 0)
@@ -576,7 +613,7 @@ int process_command(struct command_t *command)
 
 	if (strcmp(command->name, "joker") == 0)
         {
-        joker();
+//        joker();
         }
 
 	pid_t pid = fork();
@@ -596,14 +633,25 @@ int process_command(struct command_t *command)
 		// set args[arg_count-1] (last) to NULL
 		command->args[command->arg_count - 1] = NULL;
 
-		/// TODO: do your own exec with path resolving using execv()
-
+		/// TODO: do your own exec with path resolving using execv()i
+		char *local_path = set_path(command->name);// "/usr/bin/pwd";
+		
+		if (local_path != NULL) {
+			//printf("%s\n", local_path);
+			execv(local_path, command->args);
+		}						
+	       	else {
+		//	printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+		}
+				
 		exit(0);
 	}
 	else
 	{
 		/// TODO: Wait for child to finish if command is not running in background
-
+		if(!command->background) { 
+			wait(NULL);
+		}
 		return SUCCESS;
 	}
 
@@ -633,21 +681,3 @@ void file_printer(char *file_list[], size_t size) {
         }
     }
 }
-
-/*
-void file_opener(char *file_list[], size_t size) {
-	int i;
-    for (i = 0; i < size; i++) {
-        if (strcmp(file_list[i], "") != 0) {
-            char *args[] = {"xdg-open", file_list[i], NULL};
-            pid_t pid = fork();
-            if (pid == 0) {
-                char *path = find_path("xdg-open");
-                execv(path, args);
-                free(path);
-            } else {
-                wait(NULL);
-            }
-        }
-    }
-} */
