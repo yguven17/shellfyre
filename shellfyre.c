@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h> //for search file, dir 
+#include <time.h>
 const char *sysname = "shellfyre";
 
 enum return_codes
@@ -348,7 +349,7 @@ int main()
 
 char* set_path(char *command);
 
-int open_file(char *name) {
+int open_file(char *name) { //this function is helper for filesearch()
 
 	pid_t pid = fork();
 	if (pid == 0) {
@@ -364,6 +365,46 @@ int open_file(char *name) {
 
 
 	return SUCCESS;
+}
+
+void file_properties() {
+
+	char file[1024];
+	struct stat buf;
+	printf("Enter file name: ");
+	//fgets(file, 1024, stdin);
+	scanf("%s", file);
+	//file[strlen(file-1)] = '\0';
+	//printf("%s\n", file);
+	if(stat(file, &buf) == 0) {
+		struct tm date;
+		struct tm date2;
+		printf("\nFile access permisson: ");
+		if (buf.st_mode & R_OK) {
+			printf("read");
+		}
+
+		if (buf.st_mode & W_OK) {
+                        printf("write");
+                }
+
+		if (buf.st_mode & X_OK) {
+                        printf("execute");
+                }
+
+		printf("\nFile siz: %ld\n", buf.st_size);
+		
+		date = *(gmtime(&buf.st_ctime));
+		printf("Created date: %d-%d-%d, time: %d:%d:%d\n", date.tm_mday, date.tm_mon, date.tm_year+1900,date.tm_hour, date.tm_min, date.tm_sec);
+
+	//	date2 = *(gmtime(&buf.st_mtime));
+          //      printf("Modified date: %d-%d-%d, time: %d:%d:%d\n", date2.tm_mday, date2.tm_mon, date2.tm_year+1900, 
+	//			date2.tm_hour, date2.tm_min, date2.tm_sec);
+	} else {
+		printf("File can not find.\n");
+	
+	}
+
 }
 
 void file_search(char *fileName, char *secondCommand, char *dirCommand, char *thirdCommand) 
@@ -409,14 +450,14 @@ void file_search(char *fileName, char *secondCommand, char *dirCommand, char *th
 	closedir(folder);
 }
 
-void pwd() // basic
+void pwd() // extra basic 
 {
 	char cwd[1024];
         getcwd(cwd, sizeof(cwd));
         printf("%s\n", cwd);
 }
 
-void ls() //basic 
+void ls() // extra  basic 
 {
 	DIR *folder;
         struct dirent *entry;
@@ -431,12 +472,13 @@ void ls() //basic
 		 printf("\n");
         }
         closedir(folder);
-
-
-
 }
 
-void check_length_file() {
+/*
+ *this function is helper for cdh()
+ *this function chechk history.txt length. If length is greater than 10 lines, delete lines after 10 th line.
+ */
+void check_length_file() { 
 	FILE *history = fopen(history_path, "r");
 	int line_count = 0;
 	char line[500];
@@ -467,6 +509,10 @@ void check_length_file() {
 	}
 }
 
+/*
+ * this function is a helper for cdh command.
+ * print history text after calling cdh command
+ */
 void print_in_file() 
 {
 	FILE *history = fopen(history_path, "a+"); //append mode
@@ -519,6 +565,10 @@ void cdh()
 
 }
 
+/*
+ * this function is a helper for basic commands 
+ * this function is a helper for open_file funtion
+ */
 char* set_path(char *command) {
 	char *path = malloc(1024);
 	strcat(path, "/usr/bin/"); //path adress
@@ -565,19 +615,9 @@ int process_command(struct command_t *command)
 
 	// TODO: Implement your custom commands here
 
-/*	if (strcmp(command->name, "pwd") == 0)
-        {
-		pwd();
-        }
-
-	if (strcmp(command->name, "ls") == 0)
-        {
-		ls();
-        }
-*/
 	if (strcmp(command->name, "take") == 0)
 	{
-
+		return SUCCESS;
 	}
 
 	if (strcmp(command->name, "filesearch") == 0)
@@ -609,12 +649,32 @@ int process_command(struct command_t *command)
 	if (strcmp(command->name, "cdh") == 0)
         {
 		cdh();
+		return SUCCESS;
         }
 
 	if (strcmp(command->name, "joker") == 0)
-        {
-//        joker();
+        {	
+		//joker();
+		return SUCCESS;
         }
+
+	if (strcmp(command->name, "fileproperties") == 0)
+        {
+                file_properties();
+                return SUCCESS;
+        }
+
+
+	if (strcmp(command->name, "manual") == 0)
+        {
+		if (strcmp(command->args[0], "pwd") == 0) {
+			pwd();
+		} else if (strcmp(command->args[0], "ls") == 0) {
+                        ls();
+                }
+                return SUCCESS;
+        }
+
 
 	pid_t pid = fork();
 
